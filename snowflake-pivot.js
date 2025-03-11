@@ -1,4 +1,3 @@
--- Create stored procedure to generate dynamic pivot SQL
 CREATE OR REPLACE PROCEDURE GENERATE_PIVOT_SQL(TABLE_NAME STRING, MAX_ROWS NUMBER)
 RETURNS STRING
 LANGUAGE JAVASCRIPT
@@ -20,7 +19,7 @@ $$
     if (colNames.length === 0) {
         throw new Error(`No columns found for table '${TABLE_NAME}'.`);
     }
-
+    
     // Get row count
     var getRowCountSql = `SELECT COUNT(*) as ROW_COUNT FROM ${TABLE_NAME}`;
     var rowStmt = snowflake.createStatement({sqlText: getRowCountSql});
@@ -30,12 +29,13 @@ $$
     
     // Cap row count at MAX_ROWS to avoid excessive column creation
     var effectiveRowCount = Math.min(rowCount, MAX_ROWS);
+    var results = []; // Initialize results array properly
+    
     if (rowCount > MAX_ROWS) {
-        // Log a warning (could be enhanced with actual logging in a production environment)
-        results = results || [];
+        // Log a warning
         results.push(`Warning: Table '${TABLE_NAME}' has ${rowCount} rows, but only ${MAX_ROWS} will be pivoted due to MAX_ROWS limit.`);
     }
-
+    
     // Generate the pivot SQL
     var pivotSql = `
     CREATE OR REPLACE TABLE ${TABLE_NAME}_PIVOTED AS
@@ -45,7 +45,11 @@ $$
             ROW_NUMBER() OVER (ORDER BY (SELECT NULL)) AS row_num,
             *
         FROM ${TABLE_NAME}
-        WHERE row_num <= ${MAX_ROWS}  -- Limit rows processed
+    ),
+    limited_rows AS (
+        -- Filter to only include rows we want to pivot
+        SELECT * FROM numbered_rows
+        WHERE row_num <= ${MAX_ROWS}
     ),
     unpivoted AS (
         -- Flatten the table into key-value pairs
@@ -53,9 +57,9 @@ $$
             row_num,
             key AS col_name,
             value AS col_value
-        FROM numbered_rows,
+        FROM limited_rows,
         LATERAL FLATTEN(input => OBJECT_CONSTRUCT(
-            ${colNames.map(col => `'${col}', ${col}`).join(',\n            ')}
+            ${colNames.map(col => `'${col}', "${col}"`).join(',\n            ')}
         ))
     )
     SELECT 
@@ -68,6 +72,10 @@ $$
     ORDER BY col_name;
     -- Note: This pivots the table so that original columns become rows, and original rows become columns (up to ${MAX_ROWS}).
     `;
+    
+    if (results.length > 0) {
+        return `-- ${results.join('\n-- ')}\n${pivotSql}`;
+    }
     
     return pivotSql;
 }
@@ -86,7 +94,7 @@ $$
     TABLE_NAMES.forEach(function(table) {
         try {
             // Generate pivot SQL
-            var getPivotSql = `CALL GENERATE_PIVOT_SQL('${table}', ${MAX_ROWS})`;
+            var getPivotSql = `CALL GENERATE_PIVOT_SQL('${table.replace(/'/g, "''")}', ${MAX_ROWS})`;
             var stmt = snowflake.createStatement({sqlText: getPivotSql});
             var pivotSql = stmt.execute();
             pivotSql.next();
