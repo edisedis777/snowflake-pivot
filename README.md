@@ -36,8 +36,7 @@ This repository contains Snowflake stored procedures written in JavaScript to dy
 #### Steps
 1. Deploy the Procedures
 -Copy and execute the SQL code in Snowflake to create the stored procedures. Replace the placeholders with the full JavaScript code from this repository.
-```
-sql
+```sql
 -- Deploy GENERATE_PIVOT_SQL
 CREATE OR REPLACE PROCEDURE GENERATE_PIVOT_SQL(TABLE_NAME STRING, MAX_ROWS NUMBER)
 RETURNS STRING
@@ -55,8 +54,7 @@ $$ [insert full JavaScript code here] $$;
 
 2. Pivot a Single Table
 -Generate the pivot SQL and execute it to create the pivoted table.
-```
-sql
+```sql
 -- Generate pivot SQL
 CALL GENERATE_PIVOT_SQL('your_table_name', 1000);
 
@@ -67,8 +65,7 @@ CREATE OR REPLACE TABLE your_table_name_PIVOTED AS
 
 3. Pivot Multiple Tables
 - Use an array of table names to pivot multiple tables at once.
-```
-sql
+```sql
 DECLARE
     table_list ARRAY := ARRAY_CONSTRUCT('table1', 'table2', 'table3');
     max_rows NUMBER := 1000;  -- Adjust as needed
