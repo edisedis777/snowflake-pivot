@@ -114,4 +114,4 @@ This creates tables like table1_PIVOTED, table2_PIVOTED, etc.
 - Allow custom names for pivoted tables instead of the default ${TABLE_NAME}_PIVOTED.
 
 ## License
-- MIT License
+- This project is licensed under the MIT License - see the LICENSE file for details.
