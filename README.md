@@ -1,118 +1,120 @@
-# Snowflake Dynamic Pivot Stored Procedures
-[![Visual Studio Code](https://custom-icon-badges.demolab.com/badge/Visual%20Studio%20Code-0078d7.svg?logo=vsc&logoColor=white)](#)
-[![Markdown](https://img.shields.io/badge/Markdown-%23000000.svg?logo=markdown&logoColor=white)](#)
+# Snowflake Dynamic Pivot Utilities
+![Snowflake](https://img.shields.io/badge/snowflake-0.0.0?style=for-the-badge&logo=snowflake&logoColor=white&color=29B5E8)
+![JavaScript](https://img.shields.io/badge/javascript-0.0.0?style=for-the-badge&logo=javascript&logoColor=F7DF1E&color=323330)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+A pair of powerful Snowflake stored procedures for dynamically pivoting tables in your Snowflake data warehouse.
 
-Snowflake stored procedures written in JavaScript to dynamically generate and execute SQL for pivoting tables. The pivot operation transforms a table by converting its columns into rows and spreading the values from the original rows into new columns based on row numbers, with a configurable limit on the number of rows to pivot. This approach helps manage performance and avoids exceeding column limits.
+## 🚀 Overview
 
-## Procedures
-1. GENERATE_PIVOT_SQL(TABLE_NAME STRING, MAX_ROWS NUMBER)
-- Purpose: Generates a SQL string to pivot the specified table, capping the number of rows pivoted to prevent excessive column creation.
-- **Inputs:**
-- TABLE_NAME: The name of the table to pivot (case-insensitive, converted to uppercase internally).
-- MAX_ROWS: The maximum number of rows to pivot, limiting the number of columns in the pivoted table.
-- **Output:**
-  A string containing the SQL code to create a pivoted version of the table as ${TABLE_NAME}_PIVOTED.
-- #### Behavior:
-- Retrieves column names from INFORMATION_SCHEMA.COLUMNS.
-- Assigns row numbers using ROW_NUMBER() and limits rows to MAX_ROWS.
-- Unpivots the table into key-value pairs (col_name and col_value) with row numbers.
-- Pivots the data, grouping by col_name and spreading col_value into columns (row_1, row_2, etc.) up to MAX_ROWS.
-- Warns if the table has more rows than MAX_ROWS.
-2. PIVOT_ALL_TABLES(TABLE_NAMES ARRAY, MAX_ROWS NUMBER)
-- Purpose: Executes the pivot operation for each table in an array of table names, using the specified MAX_ROWS limit.
-- **Inputs:**
-- TABLE_NAMES: An array of table names to pivot.
-- MAX_ROWS: The maximum number of rows to pivot for each table.
-- **Output:** A string summarizing success or error messages for each table processed.
-- Behavior:
-- Loops through the array of table names.
-- Calls GENERATE_PIVOT_SQL for each table to generate the pivot SQL.
-- Executes the SQL to create the pivoted table.
-- Returns feedback like "Successfully pivoted table: table1" or error details.
+When analyzing data, you sometimes need to transform row-oriented data into column-oriented format (or vice versa). This "pivoting" operation can be challenging to code manually, especially when you don't know the number of columns in advance.
 
-## Usage
+These utilities solve this problem by:
 
-#### Prerequisites
-- Ensure you have permissions in Snowflake to create stored procedures and tables.
-- The tables to pivot must exist in the current schema or be fully qualified (e.g., database.schema.table_name).
+1. Automatically detecting all columns in your source table
+2. Generating optimized SQL to transform rows into columns
+3. Creating a new pivoted table with a configurable row limit
+4. Supporting batch operations across multiple tables
 
-#### Steps
-1. Deploy the Procedures
--Copy and execute the SQL code in Snowflake to create the stored procedures. Replace the placeholders with the full JavaScript code from this repository.
+## ⚙️ Features
+
+- **Dynamic Column Detection**: Automatically identifies all columns in source tables
+- **Row Limiting**: Configurable maximum rows to prevent excessive column creation
+- **Batch Processing**: Process multiple tables with a single procedure call
+- **Error Handling**: Graceful error reporting when issues occur
+- **Performance Optimized**: Uses efficient Snowflake features like LATERAL FLATTEN
+
+## 📋 Installation
+
+Copy and paste the following SQL into your Snowflake worksheet:
+
 ```sql
--- Deploy GENERATE_PIVOT_SQL
+-- Create the GENERATE_PIVOT_SQL procedure
 CREATE OR REPLACE PROCEDURE GENERATE_PIVOT_SQL(TABLE_NAME STRING, MAX_ROWS NUMBER)
 RETURNS STRING
 LANGUAGE JAVASCRIPT
 AS
-$$ [insert full JavaScript code here] $$;
+$$
+{
+    // Code for GENERATE_PIVOT_SQL (see repository files)
+}
+$$;
 
--- Deploy PIVOT_ALL_TABLES
+-- Create the PIVOT_ALL_TABLES procedure
 CREATE OR REPLACE PROCEDURE PIVOT_ALL_TABLES(TABLE_NAMES ARRAY, MAX_ROWS NUMBER)
 RETURNS STRING
 LANGUAGE JAVASCRIPT
 AS
-$$ [insert full JavaScript code here] $$;
+$$
+{
+    // Code for PIVOT_ALL_TABLES (see repository files)
+}
+$$;
 ```
 
-2. Pivot a Single Table
--Generate the pivot SQL and execute it to create the pivoted table.
-```sql
--- Generate pivot SQL
-CALL GENERATE_PIVOT_SQL('your_table_name', 1000);
+## 🔍 Usage
 
--- Execute the returned SQL (copy the output manually or store it)
-CREATE OR REPLACE TABLE your_table_name_PIVOTED AS
-[paste the generated SQL here];
+### Basic Usage - Single Table
+
+```sql
+-- Pivot a single table with a maximum of 1000 rows
+CALL GENERATE_PIVOT_SQL('YOUR_TABLE_NAME', 1000);
 ```
 
-3. Pivot Multiple Tables
-- Use an array of table names to pivot multiple tables at once.
+### Advanced Usage - Multiple Tables
+
 ```sql
+-- Pivot multiple tables at once
 DECLARE
     table_list ARRAY := ARRAY_CONSTRUCT('table1', 'table2', 'table3');
-    max_rows NUMBER := 1000;  -- Adjust as needed
+    max_rows NUMBER := 1000;
 BEGIN
     CALL PIVOT_ALL_TABLES(:table_list, :max_rows);
 END;
-This creates tables like table1_PIVOTED, table2_PIVOTED, etc.
 ```
 
-## Example Output
-- For a table employees:
+## 🧩 How It Works
 
-|emp_id	| name	| dept |
-| ----- |------ | ---- |
-|1	    | Alice	| HR   |
-|2	    | Bob	  | IT   |
+The solution works in several steps:
 
-- After running GENERATE_PIVOT_SQL('employees', 2), the result (employees_PIVOTED) is:
+1. **Column Identification**: Queries Snowflake's information schema to determine all columns in the source table
+2. **Row Counting**: Calculates the total number of rows and applies the configured limit
+3. **Dynamic SQL Generation**: Creates optimized SQL for the pivot operation using CTEs
+4. **Execution**: Runs the generated SQL to create the pivoted table
 
-| col_name	| row_1	| row_2 |
-| --------- | ----- | ----- |
-| emp_id	  | 1	    | 2     |
-| name	    | Alice	|   Bob |
-| dept	    | HR	  | IT    |
+The result is a new table with the naming convention `{original_table_name}_PIVOTED` where:
+- Original columns become rows in the first column
+- Original rows become columns (up to the configured max_rows limit)
 
-- With MAX_ROWS set to 1:
+## ⚠️ Limitations
 
-| col_name	| row_1 |
-| ---------- | ---- | 
-| emp_id	  | 1     |
-| name	    | Alice |
-| dept	    | HR    | 
+- The procedure has a MAX_ROWS parameter to avoid creating tables with too many columns
+- Column names with special characters may require additional handling
+- Very large tables might require optimization for performance
+- The pivoted table requires storage space in addition to your original table
 
+## 📝 Example
 
-## Limitations
-- Column Explosion: Even with MAX_ROWS, pivoting many rows can create numerous columns, potentially hitting Snowflake’s limit (around 16,000 columns) or slowing performance.
-- Table Overwrite: The pivoted table (${TABLE_NAME}_PIVOTED) overwrites any existing table with the same name.
-- Performance: Large datasets may experience slow performance due to FLATTEN and pivot operations. Test with small datasets first.
+Original table `SALES_DATA`:
 
-## Potential Improvements
-- Add error handling to halt execution on critical failures.
-- Include logging for warnings and errors.
-- Allow custom names for pivoted tables instead of the default ${TABLE_NAME}_PIVOTED.
+| DATE       | REGION  | PRODUCT | AMOUNT |
+|------------|---------|---------|--------|
+| 2023-01-01 | East    | WidgetA | 1000   |
+| 2023-01-02 | West    | WidgetB | 1500   |
+| 2023-01-03 | Central | WidgetA | 1200   |
 
-## License
-- This project is licensed under the MIT License - see the LICENSE file for details.
+After pivoting, table `SALES_DATA_PIVOTED`:
+
+| COL_NAME | ROW_1      | ROW_2      | ROW_3      |
+|----------|------------|------------|------------|
+| DATE     | 2023-01-01 | 2023-01-02 | 2023-01-03 |
+| REGION   | East       | West       | Central    |
+| PRODUCT  | WidgetA    | WidgetB    | WidgetA    |
+| AMOUNT   | 1000       | 1500       | 1200       |
+
+## 🤝 Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+## 📄 License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
