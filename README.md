@@ -1,6 +1,4 @@
 # Snowflake Dynamic Pivot Utilities
-![Snowflake](https://img.shields.io/badge/snowflake-0.0.0?style=for-the-badge&logo=snowflake&logoColor=white&color=29B5E8)
-![JavaScript](https://img.shields.io/badge/javascript-0.0.0?style=for-the-badge&logo=javascript&logoColor=F7DF1E&color=323330)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 A pair of powerful Snowflake stored procedures for dynamically pivoting tables in your Snowflake data warehouse.
 
