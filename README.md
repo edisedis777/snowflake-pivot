@@ -1,5 +1,9 @@
 # Snowflake Dynamic Pivot Stored Procedures
-This repository contains Snowflake stored procedures written in JavaScript to dynamically generate and execute SQL for pivoting tables. The pivot operation transforms a table by converting its columns into rows and spreading the values from the original rows into new columns based on row numbers, with a configurable limit on the number of rows to pivot. This approach helps manage performance and avoids exceeding Snowflake's column limits.
+[![Visual Studio Code](https://custom-icon-badges.demolab.com/badge/Visual%20Studio%20Code-0078d7.svg?logo=vsc&logoColor=white)](#)
+[![Markdown](https://img.shields.io/badge/Markdown-%23000000.svg?logo=markdown&logoColor=white)](#)
+[![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+
+Snowflake stored procedures written in JavaScript to dynamically generate and execute SQL for pivoting tables. The pivot operation transforms a table by converting its columns into rows and spreading the values from the original rows into new columns based on row numbers, with a configurable limit on the number of rows to pivot. This approach helps manage performance and avoids exceeding Snowflake's column limits.
 
 ## Procedures
 1. GENERATE_PIVOT_SQL(TABLE_NAME STRING, MAX_ROWS NUMBER)
