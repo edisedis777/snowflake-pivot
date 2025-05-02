@@ -1,7 +1,5 @@
 # Snowflake Dynamic Pivot Utilities
 
-[![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
-
 A pair of powerful Snowflake stored procedures for dynamically pivoting tables in your Snowflake data warehouse.
 
 ## 🚀 Overview
@@ -117,4 +115,4 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 
 ## 📄 License
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+Distributed under the GNU Affero General Public License v3.0 License. See `LICENSE` for more information.
